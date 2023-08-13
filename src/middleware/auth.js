@@ -1,29 +1,29 @@
-import jwt from "jsonwebtoken";
+const jwt = require("jsonwebtoken");
 
-const auth = async (req, res, next) => {
+const authMiddleware = (req, res, next) => {
   try {
-    if(!req.headers.authorization) return next({status: 401, message: 'Unauthorized'});
+    const token = req.headers.authorization;
 
-    const token = req.headers.authorization.split(" ")[1];
-    const isCustomAuth = token.length < 500;
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
 
-    let decodedData;
+    const tokenParts = token.split(" ");
+    if (tokenParts.length !== 2 || tokenParts[0] !== "Bearer") {
+      return res.status(401).json({ error: 'Invalid token format' });
+    }
 
-    if (token && isCustomAuth) {      
-      decodedData = jwt.verify(token, process.env.SECRET_KEY);
+    const decodedData = jwt.verify(tokenParts[1], process.env.JWT_SECRET);
+    const { id, email } = decodedData;
 
-      req.userId = decodedData?.id;
-    } else {
-      decodedData = jwt.decode(token);
-
-      req.userId = decodedData?.sub;
-    }    
+    req.id = id;
+    req.email = email;
 
     next();
   } catch (error) {
-    // return error;
-    next();
+    console.error("Authentication error:", error.message);
+    return res.status(401).json({ error: 'Authentication failure' });
   }
 };
 
-export default auth;
+module.exports = authMiddleware;

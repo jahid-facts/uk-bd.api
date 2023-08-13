@@ -1,21 +1,15 @@
-const sendToken = (user, statusCode, res) => {
-  const token = user.getJwtToken();
+const jwt = require('jsonwebtoken');
 
-  // Calculate the expiration date based on JWT_EXPIRES_TIME (in seconds)
-  const expiresIn = parseInt(process.env.JWT_EXPIRES_TIME) * 24 * 60 * 60; // Convert days to seconds
+// secret key
+const secretKey = process.env.JWT_SECRET;
 
-  // Set the options for the cookie
+// Function to generate a JWT token
+function jwtToken(payload) {
   const options = {
-    expires: new Date(Date.now() + expiresIn * 1000), // Convert seconds to milliseconds
-    httpOnly: true,
+    expiresIn: process.env.JWT_EXPIRES_TIME,
   };
+  return jwt.sign(payload, secretKey, options);
+}
 
-  // Set the cookie
-  res.status(statusCode).cookie('token', token, options).json({
-    success: true,
-    token,
-    user,
-  });
-};
 
-module.exports = sendToken;
+module.exports = jwtToken;
