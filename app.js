@@ -4,41 +4,43 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const cookieParser = require('cookie-parser');
 const cors = require('cors'); // Import the CORS package
-const { ErrorHandler, handleErrors } = require('./src/utils/errorHandler');
+const { ErrorHandler, handleErrors } = require('./src/utils/errorHandler'); 
 require('dotenv').config(); // Load environment variables from .env file
 
 // Create the Express app
 const app = express();
 
 // Set up port for the server
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 
 // Set up database connection URL
 const dbURL = process.env.MONGODB_URL || 'mongodb://localhost:27017/airbnb';
 
 // Use CORS middleware
 app.use(cors({
-  origin: 'http://localhost:3000', // Replace with your frontend domain
-  methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
+  origin: 'http://localhost:3009', // Replace with your frontend domain
+  methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH'], 
   credentials: true, // Allow cookies to be sent along with requests
 }));
 
 // Use body-parser, helmet, morgan, and cookie-parser middleware
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '100mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(helmet());
 app.use(morgan('combined'));
-app.use(cookieParser());
-
 
 // Import and use userRoute
 const userRoute = require('./src/routes/userRoute');
+const frontendRoute = require('./src/routes/frontendRoute');
+const propertyRoute = require('./src/routes/propertyRoute');
 app.use('/api', userRoute);
+app.use('/api', frontendRoute);
+app.use('/api', propertyRoute);
 
 
-// Error handling middleware
+//Error handling middleware
 app.use(handleErrors);
 
 app.use((err, req, res, next) => {
@@ -60,7 +62,7 @@ connection.on('connected', () => {
   
   // Start the server only after the database connection is established
   app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);   
+    console.log(`Server is running on http://localhost:${port}`);     
   });
 });
 

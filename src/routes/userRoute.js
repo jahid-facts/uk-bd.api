@@ -1,4 +1,4 @@
-const express = require("express");
+const express = require("express"); 
 const {
   getUserById,
   registerUser,
@@ -11,13 +11,13 @@ const {
   resendOTP,
   resetPasswordPage,
   checkUserOTP,
-  changeUserPassword
+  changeUserPassword 
 } = require("../controllers/userController");
-const authMiddleware = require('../middleware/auth');
+// const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
-router.post("/register", authMiddleware, registerUser);
+router.post("/register", registerUser);
 router.post('/verify-otp', verifyOTP);
 router.post('/resend-otp', resendOTP);
 router.post("/login", loginUser);

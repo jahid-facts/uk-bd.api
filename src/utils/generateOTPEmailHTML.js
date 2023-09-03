@@ -19,7 +19,7 @@ const generateOTPEmailHTML = (otp, subtitle, name ) => {
                   <tr>
                     <td style="padding: 40px 0px 0px;">
                       <div style="text-align: left;">
-                        <div style="padding-bottom: 20px;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Airbnb_Logo_B%C3%A9lo.svg/2560px-Airbnb_Logo_B%C3%A9lo.svg.png" alt="Company" style="height: 30px;"></div>
+                        <div style="padding-bottom: 20px;"><img src="https://ukbd.app/static/media/UKBD.0c809b708f59760b4a53.png" alt="Company" style="height: 30px;"></div>
                       </div>
                       <div style="padding: 20px; background-color: rgb(255, 255, 255);">
                         <div style="color: rgb(0, 0, 0); text-align: left;">

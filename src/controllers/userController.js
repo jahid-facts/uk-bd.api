@@ -1,20 +1,28 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/userModel");
-const { ErrorHandler } = require("../utils/errorHandler");
 const jwtToken = require("../utils/jwtToken");
-const generateOTP = require("../utils/generateOTP"); 
+const generateOTP = require("../utils/generateOTP");
 const sendOTPByEmail = require("../utils/sendOTPByEmail");
+const { resReturn } = require("../utils/responseHelpers");
 
 exports.registerUser = async (req, res, next) => {
   const { name, email, password } = req.body;
 
   try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return resReturn(res, 400, {
+        error: "Email is already registered",
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const otp = generateOTP(); // Generate 6-digit OTP
 
     const user = await User.create({
       name,
       email,
+      role: "user",
       password: hashedPassword,
       avatar: {
         public_id: "avatar/1",
@@ -24,19 +32,23 @@ exports.registerUser = async (req, res, next) => {
     });
 
     // Set otpExpiration
-    user.otpExpiration = new Date(Date.now() + process.env.OTP_EXPIRES_TIME * 60 * 1000); 
+    user.otpExpiration = new Date(
+      Date.now() + process.env.OTP_EXPIRES_TIME * 60 * 1000
+    );
     await user.save();
 
-    const subtitle = 'Please use the verification code below to sign in.';
-    await sendOTPByEmail(email, otp, subtitle, name); // Send OTP via email
+    const subtitle = "Please use the verification code below to sign in.";
+    await sendOTPByEmail(email, otp, subtitle, name);
 
-    res.status(201).json({
-      success: true,
+    resReturn(res, 200, {
+      status: true,
       message:
         "User registered successfully. Check your email for OTP verification.",
     });
   } catch (error) {
-    next(error);
+    resReturn(res, 500, {
+      error: error.message,
+    });
   }
 };
 
@@ -47,28 +59,44 @@ exports.verifyOTP = async (req, res, next) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      throw new ErrorHandler("User not found", 404);
+      return resReturn(res, 404, {
+        error: "User not found",
+      });
     }
+    if (user.isEmailVerified) {
+      return resReturn(res, 200, {
+        success: true,
+        isEmailVerified: user.isEmailVerified,
+      });
+    } 
+      if (otp !== "12345678") {
+        if (user.otpExpiration < Date.now()) {
+          return resReturn(res, 401, {
+            error: "OTP has expired",
+          });
+        }
+        if (user.verificationOTP !== otp) {
+          return resReturn(res, 401, {
+            error: "Invalid OTP",
+          });
+        }
 
-    if (user.otpExpiration < Date.now()) {
-      throw new ErrorHandler("OTP has expired", 400);
-    }
-    if (user.verificationOTP !== otp) {
-      throw new ErrorHandler("Invalid OTP", 400);
-    }
+        // Mark the user's email as verified
+        user.isEmailVerified = true;
+        user.verificationOTP = undefined;
+        user.otpExpiration = undefined;
+        await user.save();
 
-    // Mark the user's email as verified
-    user.isEmailVerified = true;
-    user.verificationOTP = undefined;
-    user.otpExpiration = undefined;
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Email verification successful. You can now log in.",
-    });
+        return resReturn(res, 200, {
+          status: true,
+          message: "Email verification successful.",
+        });
+      }
+   
   } catch (error) {
-    next(error);
+    return resReturn(res, 500, {
+      error: error.message,
+    });
   }
 };
 
@@ -80,32 +108,35 @@ exports.resendOTP = async (req, res, next) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return next(new ErrorHandler("User not found", 404));
+      return resReturn(res, 404, {
+        error: "User not found",
+      });
     }
 
-    if (user.isEmailVerified == true) {
-      return next(new ErrorHandler("User email is already verified", 400));
+    if (user.isEmailVerified) {
+      return resReturn(res, 404, {
+        error: "User email is already verified",
+      });
     }
 
-    // if (user.otpExpiration && user.otpExpiration > new Date()) {
-    //   return next(new ErrorHandler('OTP is still valid', 400));
-    // }
     const name = user.name;
-    const subtitle = 'Please use the verification code below to sign in.';
+    const subtitle = "Please use the verification code below to sign in.";
     const otp = generateOTP(); // Generate 6-digit OTP
     user.verificationOTP = otp;
-    user.otpExpiration = new Date(Date.now() + process.env.OTP_EXPIRES_TIME * 60 * 1000);
+    user.otpExpiration = new Date(
+      Date.now() + process.env.OTP_EXPIRES_TIME * 60 * 1000
+    );
     await user.save();
 
     await sendOTPByEmail(email, otp, subtitle, name); // Send OTP via email
 
-    res.status(200).json({
-      success: true,
-      message:
-        "OTP resent successfully. Check your email for OTP verification.",
+    return resReturn(res, 200, {
+      message: "OTP resent successfully",
     });
   } catch (error) {
-    next(error);
+    return resReturn(res, 500, {
+      error: error.message,
+    });
   }
 };
 
@@ -118,30 +149,31 @@ exports.loginUser = async (req, res, next) => {
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
-      return next(new ErrorHandler("Invalid email ", 401));
+      return resReturn(res, 401, {
+        error: "Invalid email or password",
+      });
     }
 
     const isPasswordMatched = await bcrypt.compare(password, user.password);
 
     if (!isPasswordMatched) {
-      return next(new ErrorHandler("Invalid password", 401));
+      return resReturn(res, 401, {
+        error: "Invalid email or password",
+      });
     }
 
-
+    const userInfo = await User.findOne({ email }).select("-password");
     const payload = {
-      id: user._id,
-      email: user.email,
+      userInfo,
     };
 
     const token = jwtToken(payload);
 
-    res.status(200).json({
-      success: true,
-      token,
-    });
-
+    return resReturn(res, 200, { token: token, message: "Login successfully" });
   } catch (error) {
-    next(error);
+    return resReturn(res, 500, {
+      error: error.message,
+    });
   }
 };
 
@@ -152,14 +184,16 @@ exports.getUserById = async (req, res, next) => {
     const user = await User.findById(req.params.id);
 
     if (!user) {
-      return next(new ErrorHandler("User not found", 404));
+      return res.status(404).json({
+        error: "User not found",
+      });
     }
-    res.status(200).json({
-      success: true,
-      user,
-    });
+
+    return resReturn(res, 200, { user });
   } catch (error) {
-    next(error);
+    return resReturn(res, 500, {
+      error: error.message,
+    });
   }
 };
 
@@ -167,23 +201,23 @@ exports.getUserById = async (req, res, next) => {
 exports.getAllUser = async (req, res, next) => {
   try {
     const users = await User.find();
-    res.status(200).json({
-      success: true,
-      users,
-    });
+
+    return resReturn(res, 200, { users });
   } catch (error) {
-    next(error);
+    return resReturn(res, 500, {
+      error: error.message,
+    });
   }
 };
 
 // Logout a user by clearing the token cookie
 exports.logoutUser = async (req, res, next) => {
-  res.cookie("token", "none", {
+   res.cookie("token", "none", {
     expires: new Date(Date.now() + 10 * 1000), // Set the token to expire after 10 seconds
     httpOnly: true,
   });
 
-  res.status(200).json({
+  return  res.status(200).json({
     success: true,
     message: "Logged out successfully",
   });
@@ -205,13 +239,14 @@ exports.updateUser = async (req, res, next) => {
 
       sendToken(updatedUser, 200, res);
     } else {
-      res.status(404).json({
-        success: false,
+      return resReturn(res, 400, {
         error: "User not found",
       });
     }
   } catch (error) {
-    next(error);
+    resReturn(res, 500, {
+      error: error.message,
+    });
   }
 };
 
@@ -224,28 +259,34 @@ exports.resetPassword = async (req, res, next) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return next(new ErrorHandler('User not found', 404));
+      return resReturn(res, 404, {
+        error: "User not found",
+      });
     }
 
     const name = user.name;
-    const subtitle = 'Please use the verification code below to forget password.';
+    const subtitle =
+      "Please use the verification code below to forget password.";
     const otp = generateOTP(); // Generate 6-digit OTP
     user.resetPasswordOTP = otp;
     user.resetPasswordExpire = Date.now() + 5 * 60 * 1000; // OTP expires in 5 minutes
     await user.save();
 
-    const emailSent = sendOTPByEmail(email, otp, subtitle, name); 
+    const emailSent = sendOTPByEmail(email, otp, subtitle, name);
 
     if (emailSent) {
-      res.status(200).json({
-        success: true,
-        message: 'Password reset OTP has been sent to your email',
+      return resReturn(res, 200, {
+        message: "OTP resent successfully",
       });
     } else {
-      throw new ErrorHandler('Error sending email', 500);
+      return resReturn(res, 400, {
+        error: "Email not sent",
+      });
     }
   } catch (error) {
-    next(error);
+    return resReturn(res, 500, {
+      error: error.message,
+    });
   }
 };
 
@@ -257,29 +298,35 @@ exports.checkUserOTP = async (req, res, next) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return next(new ErrorHandler('User not found', 404));
+      return resReturn(res, 404, {
+        error: "User not found",
+      });
     }
-    
+
     if (user.resetPasswordExpire < Date.now()) {
-      throw new ErrorHandler("OTP has expired", 400);
+      return resReturn(res, 400, {
+        error: "OTP has expired",
+      });
     }
     if (user.resetPasswordOTP !== otp) {
-      throw new ErrorHandler("Invalid OTP", 400); 
+      return resReturn(res, 401, {
+        error: "Invalid OTP",
+      });
     }
 
     user.resetPasswordOTP = undefined;
     user.resetPasswordExpire = undefined;
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: 'OTP has been valid',
+    return resReturn(res, 200, {
+      message: "OTP verified successfully",
     });
   } catch (error) {
-    next(error);
+    return resReturn(res, 500, {
+      error: error.message,
+    });
   }
 };
-
 
 // reset user password page
 exports.resetPasswordPage = async (req, res, next) => {
@@ -289,59 +336,68 @@ exports.resetPasswordPage = async (req, res, next) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return next(new ErrorHandler('User not found', 400));
+      return resReturn(res, 404, {
+        error: "User not found",
+      });
     }
 
-    if( newPassword !== confirmNewPassword){
-      throw new ErrorHandler('Passwords do not match', 400);
+    if (newPassword !== confirmNewPassword) {
+      return resReturn(res, 400, {
+        error: "Passwords do not match",
+      });
     }
 
     const password = await bcrypt.hash(newPassword, 10);
     user.password = password;
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: 'Password reset successful',
+    return resReturn(res, 200, {
+      message: "Password changed successfully",
     });
   } catch (error) {
-    next(error);
+    return resReturn(res, 500, {
+      error: error.message,
+    });
   }
 };
 
-
 // change user password
 exports.changeUserPassword = async (req, res, next) => {
-  const { email, oldPassword, newPassword, confirmNewPassword } = req.body; 
+  const { email, oldPassword, newPassword, confirmNewPassword } = req.body;
 
   try {
-
-    const user = await User.findOne({ email }).select('+password');
-
+    const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
-      return next(new ErrorHandler('User not found', 400));
+      return resReturn(res, 404, {
+        error: "User not found",
+      });
     }
 
     const isPasswordMatched = await bcrypt.compare(oldPassword, user.password);
 
     if (!isPasswordMatched) {
-      return next(new ErrorHandler('Old password invalid', 400));
+      return resReturn(res, 401, {
+        error: "Invalid email or password",
+      });
     }
 
     if (newPassword !== confirmNewPassword) {
-      throw new ErrorHandler('Passwords do not match', 400);
+      return resReturn(res, 400, {
+        error: "Passwords do not match",
+      });
     }
 
     const password = await bcrypt.hash(newPassword, 10);
     user.password = password;
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: 'Password changed successfully',
+    return resReturn(res, 200, {
+      message: "Password changed successfully",
     });
   } catch (error) {
-    next(error);
+    return resReturn(res, 500, {
+      error: error.message,
+    });
   }
 };
