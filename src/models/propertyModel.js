@@ -29,6 +29,10 @@ const propertySchema = new mongoose.Schema({
   decideReservations: String,
   price: String,
   discounts: Object,
+  status: {
+    type: String,
+    default: "In progress",
+  },
 });
 
 module.exports = mongoose.model("Property", propertySchema);
