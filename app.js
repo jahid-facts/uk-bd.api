@@ -12,10 +12,10 @@ require('dotenv').config(); // Load environment variables from .env file
 const app = express();
 
 // Set up port for the server
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 5000;
 
 // Set up database connection URL
-const dbURL = process.env.MONGODB_URL || 'mongodb://localhost:27017/airbnb';
+const dbURL = process.env.MONGODB_URL || 'mongodb+srv://ukbd:MNjqO714lSWx6le5@uk-bd-00.kt2fhlb.mongodb.net/uk-bd';
 
 // Use CORS middleware
 app.use(cors({
@@ -72,6 +72,11 @@ connection.on('error', (err) => {
 
 connection.on('disconnected', () => {
   console.log('Disconnected from MongoDB');
+});
+
+
+app.get("/", (req, res, next) => {
+  res.status(200).send('Server is working...');
 });
 
 

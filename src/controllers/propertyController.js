@@ -21,3 +21,4 @@ exports.getAllProperties = async (req, res, next) => {
         return resReturn(res, 500, {error: error.message})
     }
 }
+

@@ -68,31 +68,30 @@ exports.verifyOTP = async (req, res, next) => {
         success: true,
         isEmailVerified: user.isEmailVerified,
       });
-    } 
-      if (otp !== "12345678") {
-        if (user.otpExpiration < Date.now()) {
-          return resReturn(res, 401, {
-            error: "OTP has expired",
-          });
-        }
-        if (user.verificationOTP !== otp) {
-          return resReturn(res, 401, {
-            error: "Invalid OTP",
-          });
-        }
-
-        // Mark the user's email as verified
-        user.isEmailVerified = true;
-        user.verificationOTP = undefined;
-        user.otpExpiration = undefined;
-        await user.save();
-
-        return resReturn(res, 200, {
-          status: true,
-          message: "Email verification successful.",
+    }
+    if (otp !== "12345678") {
+      if (user.otpExpiration < Date.now()) {
+        return resReturn(res, 401, {
+          error: "OTP has expired",
         });
       }
-   
+      if (user.verificationOTP !== otp) {
+        return resReturn(res, 401, {
+          error: "Invalid OTP",
+        });
+      }
+
+      // Mark the user's email as verified
+      user.isEmailVerified = true;
+      user.verificationOTP = undefined;
+      user.otpExpiration = undefined;
+      await user.save();
+
+      return resReturn(res, 200, {
+        status: true,
+        message: "Email verification successful.",
+      });
+    }
   } catch (error) {
     return resReturn(res, 500, {
       error: error.message,
@@ -212,12 +211,12 @@ exports.getAllUser = async (req, res, next) => {
 
 // Logout a user by clearing the token cookie
 exports.logoutUser = async (req, res, next) => {
-   res.cookie("token", "none", {
+  res.cookie("token", "none", {
     expires: new Date(Date.now() + 10 * 1000), // Set the token to expire after 10 seconds
     httpOnly: true,
   });
 
-  return  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: "Logged out successfully",
   });
