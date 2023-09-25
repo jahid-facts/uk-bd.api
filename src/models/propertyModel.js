@@ -25,7 +25,12 @@ const propertySchema = new mongoose.Schema({
       ref: "Amenities",
     },
   ],
-  images: Object,
+  images: [
+    {
+      name: String,
+      url: String,
+    },
+  ],
   decideReservations: String,
   price: String,
   discounts: Object,
@@ -35,4 +40,6 @@ const propertySchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Property", propertySchema);
+const PropertyModel = mongoose.model("AllProperty", propertySchema);
+
+module.exports = PropertyModel;

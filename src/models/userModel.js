@@ -1,4 +1,4 @@
-const mongoose = require("mongoose"); 
+const mongoose = require("mongoose");
 const validator = require("validator");
 const userSchema = new mongoose.Schema(
   {
@@ -29,13 +29,14 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
+      default: "user",
     },
     verificationOTP: {
       type: String,
     },
     isEmailVerified: {
       type: Boolean,
-      default: false, 
+      default: false,
     },
     otpExpiration: {
       type: Date,
@@ -46,12 +47,10 @@ const userSchema = new mongoose.Schema(
     resetPasswordExpire: {
       type: Date,
     },
-    
   },
   {
     timestamps: true,
   }
 );
-
 
 module.exports = mongoose.model("User", userSchema);

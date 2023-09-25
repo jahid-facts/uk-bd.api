@@ -17,9 +17,10 @@ const port = process.env.PORT || 5000;
 // Set up database connection URL
 const dbURL = process.env.MONGODB_URL || 'mongodb+srv://ukbd:MNjqO714lSWx6le5@uk-bd-00.kt2fhlb.mongodb.net/uk-bd';
 
-// Use CORS middleware
+  
+// Use CORS middleware 
 app.use(cors({
-  origin: 'http://localhost:3009', // Replace with your frontend domain
+  origin: process.env.CORS_ORIGIN, 
   methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH'], 
   credentials: true, // Allow cookies to be sent along with requests
 }));
@@ -58,7 +59,7 @@ mongoose.connect(dbURL, {
 const connection = mongoose.connection;
 
 connection.on('connected', () => {
-  console.log('Connected to MongoDB');
+  console.log('Connected to MongoDB'); 
   
   // Start the server only after the database connection is established
   app.listen(port, () => {
@@ -74,9 +75,10 @@ connection.on('disconnected', () => {
   console.log('Disconnected from MongoDB');
 });
 
-
+ 
 app.get("/", (req, res, next) => {
   res.status(200).send('Server is working...');
 });
 
 
+ 
