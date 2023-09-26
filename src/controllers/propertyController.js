@@ -49,6 +49,28 @@ exports.getProperty = async (req, res, next) => {
   }
 };
 
+// find property with all details
+
+exports.getPropertyAllDetails = async (req, res, next) => {
+  try {
+    const propertyId = req.params.id;
+    const property = await AllProperty.findById(propertyId)
+      .populate("userId") // Populate the userId field
+      .populate("placeDescribesId") // Populate the placeDescribesId field
+      .populate("typeOfPlaceId") // Populate the typeOfPlaceId field
+      .populate("amenitiesIds"); // Populate the amenitiesIds field
+
+    if (!property) {
+      return resReturn(res, 404, { error: "Property not found" });
+    }
+
+    return resReturn(res, 200, { property });
+  } catch (error) {
+    return resReturn(res, 500, { error: error.message });
+  }
+};
+
+
 // Update property by ID
 exports.updateProperty = async (req, res, next) => {
   try {
