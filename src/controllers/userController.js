@@ -165,7 +165,7 @@ exports.loginUser = async (req, res, next) => {
     const payload = {
       userInfo,
     };
-
+ 
     const token = jwtToken(payload);
 
     return resReturn(res, 200, { token: token, message: "Login successfully" });

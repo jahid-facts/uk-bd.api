@@ -71,7 +71,7 @@ exports.getPropertyAllDetails = async (req, res, next) => {
 };
 
 
-// Update property by ID
+// Update property 
 exports.updateProperty = async (req, res, next) => {
   try {
     const propertyId = req.params.id;
