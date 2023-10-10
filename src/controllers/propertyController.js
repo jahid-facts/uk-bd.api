@@ -1,21 +1,22 @@
 const AllProperty = require("../models/propertyModel");
+const User = require("../models/userModel");
 const { resReturn } = require("../utils/responseHelpers");
 
 // add property
 exports.addProperty = async (req, res, next) => {
   try {
     const property = await AllProperty.create(req.body);
-    console.log('jahid')
+    await User.findByIdAndUpdate(req.body.userId,{ type: 'host'}, { new: true });
     return resReturn(res, 201, { property });
   } catch (error) {
     return resReturn(res, 500, { error: error.message });
-  }
-};
+  } 
+}; 
 
 // get all properties
 exports.getAllProperties = async (req, res, next) => {
   try {
-    const properties = await AllProperty.find();
+    const properties = await AllProperty.find().populate("placeDescribesId");
     return resReturn(res, 200, { properties });
   } catch (error) {
     return resReturn(res, 500, { error: error.message });
@@ -26,12 +27,13 @@ exports.getAllProperties = async (req, res, next) => {
 exports.getUserProperties = async (req, res, next) => {
   try {
     const userId = req.params.id;
-    const properties = await AllProperty.find({ userId });
+    const properties = await AllProperty.find({ userId, status: { $ne: "disabled" } });
     return resReturn(res, 200, { properties });
   } catch (error) {
     return resReturn(res, 500, { error: error.message });
   }
 };
+
 
 // find property by use property id
 exports.getProperty = async (req, res, next) => {
@@ -70,6 +72,17 @@ exports.getPropertyAllDetails = async (req, res, next) => {
   }
 };
 
+ // Query properties where status is "active"
+exports.getActiveProperties = async (req, res, next) => {
+  try {
+    const activeProperties = await AllProperty.find({ status: "active" });
+
+    return resReturn(res, 200, { activeProperties });
+  } catch (error) {
+    return resReturn(res, 500, { error: error.message });
+  }
+};
+ 
 
 // Update property 
 exports.updateProperty = async (req, res, next) => {
@@ -91,7 +104,7 @@ exports.updateProperty = async (req, res, next) => {
     return resReturn(res, 500, { error: error.message });
   }
 };
-
+ 
 // Delete property by ID
 exports.deleteProperty = async (req, res, next) => {
   try {
@@ -109,3 +122,4 @@ exports.deleteProperty = async (req, res, next) => {
   }
 };
 
+   
