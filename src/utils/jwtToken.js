@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 // secret key
 const secretKey = process.env.JWT_SECRET;
@@ -10,6 +10,5 @@ function jwtToken(payload) {
   };
   return jwt.sign(payload, secretKey, options);
 }
-
 
 module.exports = jwtToken;

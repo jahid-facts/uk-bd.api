@@ -10,7 +10,7 @@ exports.addProperty = async (req, res, next) => {
     return resReturn(res, 201, { property });
   } catch (error) {
     return resReturn(res, 500, { error: error.message });
-  } 
+  }
 }; 
 
 // get all properties
