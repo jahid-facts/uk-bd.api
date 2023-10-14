@@ -22,7 +22,6 @@ exports.stripePaymentGateway = async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
       currency: "usd",
-      automatic_payment_methods: {enabled: true},
       payment_method_types: ["card"],
       description: `Payment for ${name} ( ${email} )`,
     });
