@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const paymentSchema = new mongoose.Schema(
   {
+    stripeId: String,
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -10,14 +11,14 @@ const paymentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "AllProperty",
     },
-    stripeId: String,
     originalPrice: Number,
     actualPrice: Number,
     discountAmount: Number,
     serviceFee: Number,
     discountPercentage: Number,
     currency: String,
-    status: string,
+    invoice: String,
+    status: String,   
   },
   {
     timestamps: true,

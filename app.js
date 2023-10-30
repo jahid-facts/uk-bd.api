@@ -6,6 +6,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const cors = require("cors"); // Import the CORS package
 const { ErrorHandler, handleErrors } = require("./src/utils/errorHandler");
+const pdf = require("html-pdf");
 require("dotenv").config();
 
 // Create the Express app
@@ -38,10 +39,30 @@ const userRoute = require("./src/routes/userRoute");
 const frontendRoute = require("./src/routes/frontendRoute");
 const propertyRoute = require("./src/routes/propertyRoute");
 const stripePaymentRoute = require("./src/routes/stripePaymentRoute");
+const pdfTemplate = require("./src/documents/pdfTemplate");
 app.use("/api", userRoute);
 app.use("/api", frontendRoute);
 app.use("/api", propertyRoute);
 app.use("/api", stripePaymentRoute);
+
+// pdf generate and fetch from client
+app.post("/api/create-pdf", (req, res) => {
+  pdf.create(pdfTemplate(req.body), {}).toFile("invoice.pdf", (err) => {
+    if (err) {
+      res.status(500).send("Something went wrong while generating the PDF");
+    } else {
+      res.status(200).send("PDF successfully created");
+    }
+  });
+});
+
+app.get("/api/fetch-pdf", (req, res) => {
+  res.sendFile(`${__dirname}/invoice.pdf`, (err) => {
+    if (err) {
+      res.status(404).send("PDF not found");
+    }
+  });
+});
 
 //Error handling middleware
 app.use(handleErrors);

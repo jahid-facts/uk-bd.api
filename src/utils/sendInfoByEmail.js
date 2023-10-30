@@ -1,30 +1,34 @@
-const nodemailer = require('nodemailer');
-const generateOTPEmailHTML = require('../utils/generateOTPEmailHTML')
+const nodemailer = require("nodemailer");
+const path = require('path');
+const rootDirectory = path.join(__dirname, '../..');
 
-const sendOTPByEmail = async (email, otp, name, subtitle) => {
+const sendInfoByEmail = async (email, htmlContent, subject) => {
   // Set up a nodemailer transporter
   const transporter = nodemailer.createTransport({
     // Configure your email service settings here
     // Example for Gmail:
-    service: 'Gmail',
+    service: "Gmail",
     auth: {
       user: process.env.EMAIL_USERNAME,
       pass: process.env.EMAIL_PASSWORD,
     },
   });
 
-  const htmlContent = generateOTPEmailHTML(otp, name, subtitle);
-  
-  
-  // Send the OTP email
+  // Send the Info email
   const mailOptions = {
     from: process.env.EMAIL_USERNAME,
     to: email,
-    subject: 'OTP for Email Verification',
+    subject: subject,
     html: htmlContent,
+    attachments: [
+      {
+        filename: "invoice.pdf",
+        path: path.join(rootDirectory, 'invoice.pdf'),
+      },
+    ],
   };
 
   await transporter.sendMail(mailOptions);
 };
 
-module.exports = sendOTPByEmail;
+module.exports = sendInfoByEmail;
