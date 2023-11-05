@@ -53,7 +53,7 @@ app.post("/api/create-pdf", (req, res) => {
     } else {
       res.status(200).send("PDF successfully created");
     }
-  });
+  }); 
 });
 
 app.get("/api/fetch-pdf", (req, res) => {

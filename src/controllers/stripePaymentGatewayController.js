@@ -3,7 +3,7 @@ const Booking = require("../models/bookingModel");
 const Payment = require("../models/paymentModel");
 const GenerateHtmlPDF = require("../utils/GenerateHtmlPDF");
 const { resReturn } = require("../utils/responseHelpers");
-const sendInfoByEmail = require("../utils/sendInfoByEmail");
+const sendInvoiceByEmail = require("../utils/sendInvoiceByEmail");
 const pdf = require("html-pdf");
 const path = require("path");
 const nodemailer = require("nodemailer");
@@ -114,7 +114,7 @@ exports.paymentAndBookingProperty = async (req, res) => {
         const email = paymentIntent.metadata.renterEmail;
         const htmlContent = GenerateHtmlPDF(paymentIntent);
         const subject = "Payment confirmation";
-        sendInfoByEmail(email, htmlContent, subject)
+        sendInvoiceByEmail(email, htmlContent, subject)
           .then(() => {
             console.log("Email sent successfully");
           })

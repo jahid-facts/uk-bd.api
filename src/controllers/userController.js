@@ -2,15 +2,15 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/userModel");
 const jwtToken = require("../utils/jwtToken");
 const generateOTP = require("../utils/generateOTP");
-const sendInfoByEmail = require("../utils/sendInfoByEmail");
+const sendOtpByEmail = require("../utils/sendOtpByEmail");
 const { resReturn } = require("../utils/responseHelpers");
-const generateOTPEmailHTML = require("../utils/generateOTPEmailHTML");
 
 exports.registerUser = async (req, res, next) => {
   const { name, email, password } = req.body;
 
   try {
     const existingUser = await User.findOne({ email });
+    
     if (existingUser) {
       return resReturn(res, 400, {
         error: "Email is already registered",
@@ -38,8 +38,9 @@ exports.registerUser = async (req, res, next) => {
     );
     await user.save();
 
+    const subject ='OTP for Email Verification';
     const subtitle = "Please use the verification code below to sign in.";
-    await sendInfoByEmail(email, otp, subtitle, name);
+    await sendOtpByEmail(email, otp, subtitle, name, subject);
 
     resReturn(res, 200, {
       status: true,
@@ -127,9 +128,8 @@ exports.resendOTP = async (req, res, next) => {
       Date.now() + process.env.OTP_EXPIRES_TIME * 60 * 1000
     );
     await user.save();
-    const htmlContent = generateOTPEmailHTML(otp, name, subtitle);
     const subject ='OTP for Email Verification';
-    await sendInfoByEmail(email, subject, htmlContent); // Send OTP via email
+    await sendOtpByEmail(email, otp, subtitle, name, subject); // Send OTP via email
 
     return resReturn(res, 200, {
       message: "OTP resent successfully",
@@ -273,7 +273,8 @@ exports.resetPassword = async (req, res, next) => {
     user.resetPasswordExpire = Date.now() + 5 * 60 * 1000; // OTP expires in 5 minutes
     await user.save();
 
-    const emailSent = sendInfoByEmail(email, otp, subtitle, name);
+    const subject ='OTP for Email Verification';
+    const emailSent = sendOtpByEmail(email, otp, subtitle, name, subject);
 
     if (emailSent) {
       return resReturn(res, 200, {
