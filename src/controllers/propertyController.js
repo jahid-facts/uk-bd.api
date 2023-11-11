@@ -6,12 +6,16 @@ const { resReturn } = require("../utils/responseHelpers");
 exports.addProperty = async (req, res, next) => {
   try {
     const property = await AllProperty.create(req.body);
-    await User.findByIdAndUpdate(req.body.userId,{ type: 'host'}, { new: true });
+    await User.findByIdAndUpdate(
+      req.body.userId,
+      { type: "host" },
+      { new: true }
+    );
     return resReturn(res, 201, { property });
   } catch (error) {
     return resReturn(res, 500, { error: error.message });
   }
-}; 
+};
 
 // get all properties
 exports.getAllProperties = async (req, res, next) => {
@@ -27,13 +31,15 @@ exports.getAllProperties = async (req, res, next) => {
 exports.getUserProperties = async (req, res, next) => {
   try {
     const userId = req.params.id;
-    const properties = await AllProperty.find({ userId, status: { $ne: "disabled" } });
+    const properties = await AllProperty.find({
+      userId,
+      status: { $ne: "disabled" },
+    });
     return resReturn(res, 200, { properties });
   } catch (error) {
     return resReturn(res, 500, { error: error.message });
   }
 };
-
 
 // find property by use property id
 exports.getProperty = async (req, res, next) => {
@@ -45,7 +51,7 @@ exports.getProperty = async (req, res, next) => {
       return resReturn(res, 404, { error: "Property not found" });
     }
 
-    return resReturn(res, 200, { property }); 
+    return resReturn(res, 200, { property });
   } catch (error) {
     return resReturn(res, 500, { error: error.message });
   }
@@ -72,7 +78,7 @@ exports.getPropertyAllDetails = async (req, res, next) => {
   }
 };
 
- // Query properties where status is "active"
+// Query properties where status is "active"
 exports.getActiveProperties = async (req, res, next) => {
   try {
     const activeProperties = await AllProperty.find({ status: "active" });
@@ -82,9 +88,8 @@ exports.getActiveProperties = async (req, res, next) => {
     return resReturn(res, 500, { error: error.message });
   }
 };
- 
 
-// Update property 
+// Update property
 exports.updateProperty = async (req, res, next) => {
   try {
     const propertyId = req.params.id;
@@ -93,7 +98,11 @@ exports.updateProperty = async (req, res, next) => {
     // Ensure that userId is not updated (assuming userId should not be changed)
     delete updatedData.userId;
 
-    const property = await AllProperty.findByIdAndUpdate(propertyId, updatedData, { new: true });
+    const property = await AllProperty.findByIdAndUpdate(
+      propertyId,
+      updatedData,
+      { new: true }
+    );
 
     if (!property) {
       return resReturn(res, 404, { error: "Property not found" });
@@ -104,7 +113,7 @@ exports.updateProperty = async (req, res, next) => {
     return resReturn(res, 500, { error: error.message });
   }
 };
- 
+
 // Delete property by ID
 exports.deleteProperty = async (req, res, next) => {
   try {
@@ -113,7 +122,7 @@ exports.deleteProperty = async (req, res, next) => {
     const property = await AllProperty.findByIdAndDelete(propertyId);
 
     if (!property) {
-      return resReturn(res, 404, { error: "Property not found" }); 
+      return resReturn(res, 404, { error: "Property not found" });
     }
 
     return resReturn(res, 204); // 204 means No Content (successful deletion with no response body)
@@ -121,5 +130,3 @@ exports.deleteProperty = async (req, res, next) => {
     return resReturn(res, 500, { error: error.message });
   }
 };
-
-   

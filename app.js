@@ -9,8 +9,11 @@ const { ErrorHandler, handleErrors } = require("./src/utils/errorHandler");
 const pdf = require("html-pdf");
 require("dotenv").config();
 
+const multer = require('multer')
+
 // Create the Express app
 const app = express();
+app.use('/api/assets/images', express.static('assets/images'));
 
 // Set up port for the server
 const port = process.env.PORT || 5000;
@@ -21,16 +24,19 @@ const dbURL =
   "mongodb+srv://ukbd:MNjqO714lSWx6le5@uk-bd-00.kt2fhlb.mongodb.net/uk-bd";
 
 // Use CORS middleware
-app.use(
-  cors({
-    origin: process.env.CORS_ORIGIN,
-    methods: ["GET", "POST", "DELETE", "PUT", "PATCH"],
-    credentials: true, // Allow cookies to be sent along with requests
-  })
-);
+// app.use(
+//   cors({
+//      origin: "*",
+//     // origin: process.env.CORS_ORIGIN,
+//     methods: ["GET", "POST", "DELETE", "PUT", "PATCH"],
+//     credentials: true, // Allow cookies to be sent along with requests
+//   })
+// );
+app.use(cors());
 
 app.use(bodyParser.json({ limit: "100mb" }));
 app.use(bodyParser.urlencoded({ extended: true }));
+// app.use(bodyParser.json());
 app.use(helmet());
 app.use(morgan("combined"));
 
@@ -61,8 +67,24 @@ app.get("/api/fetch-pdf", (req, res) => {
     if (err) {
       res.status(404).send("PDF not found");
     }
-  });
+  }); 
 });
+
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    return cb(null, "assets/images/")
+  },
+  filename: function (req, file, cb) {
+    return cb(null, `${Date.now()}_${file.originalname}`)
+  }
+})
+
+const upload = multer({storage})
+
+app.post('/upload', upload.single('file'), (req, res) => {
+  console.log(req.body)
+  console.log(req.file)
+})
 
 //Error handling middleware
 app.use(handleErrors);

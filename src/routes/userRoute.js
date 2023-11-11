@@ -36,6 +36,8 @@ router.post("/logout", authMiddleware, logoutUser);
 router.put("/update/:id", updateUser);
 router.get("/users", getAllUser);
 router.get("/user/:id", getUserById);
+
+
 router.get("/students", studentController);
 router.post("/add", studentAddController);
 router.delete("/delete/:id", studentDeleteController);

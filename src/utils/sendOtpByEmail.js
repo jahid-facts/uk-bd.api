@@ -5,7 +5,8 @@ const sendOtpByEmail = async (email, otp, name, subtitle, subject) => {
   // Set up a nodemailer transporter
   const transporter = nodemailer.createTransport({
     // Configure your email service settings here
-    // Example for Gmail:
+    // Example for Gmail:  
+    
     service: 'Gmail',
     auth: {
       user: process.env.EMAIL_USERNAME,
@@ -27,4 +28,4 @@ const sendOtpByEmail = async (email, otp, name, subtitle, subject) => {
   await transporter.sendMail(mailOptions);
 };
 
-module.exports = sendOtpByEmail;
+module.exports = sendOtpByEmail;  
